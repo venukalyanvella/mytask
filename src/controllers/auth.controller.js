@@ -1,7 +1,6 @@
 
 const express = require('express');
-const router = express.Router();
-const Joi = require('joi');
+const Joi = require('@hapi/joi');
 const jwt = require('jsonwebtoken');
 const AuthModel = require('../models/Auth.Model');
 const bcrypt = require('bcrypt');
@@ -22,13 +21,13 @@ const loginUser = async (request, response) => {
             (user) => {
                 const isPassword = bcrypt.compareSync(request.body.password, user.password);
                 if(!isPassword){
-                    console.log('Password Not MAtch')
-                    result = {
+                    console.log('Password Not Match')
+                    return response.status(200).json({
                         success: false,
                         statusCode: 500,
                         message: 'Password Not Match',
                         data: null
-                    }
+                    })
                }else {
                    let payload = {
                        _id:user._id,
@@ -42,13 +41,13 @@ const loginUser = async (request, response) => {
                     algorithm:'HS256',
                     expiresIn:'1h'
                 })
-                result = {
+                return response.status(200).json({
                     success: true,
                     statusCode: 200,
                     message: 'Login Successfull..',
                     data: payload,
                     token:token
-                }
+                })
                }
                  
 
@@ -61,15 +60,15 @@ const loginUser = async (request, response) => {
     }
     catch (error) {
         console.log(error)
-        result = {
+        return response.status(200).json({
             success: false,
             statusCode: 400,
             message: 'Server Error please try again',
             data: null
-        }
+        })
     }
 
-    return response.status(200).json(result)
+    
 
 }
 
@@ -79,6 +78,23 @@ const newUser = async (request, response) => {
     const today = new Date();
     let salt = bcrypt.genSaltSync(10);
     let hashpassword = bcrypt.hashSync(request.body.password,salt);
+
+    const schema = Joi.object().keys({
+        fullname:Joi.string().required(),
+        username:Joi.string().required(),
+        password:Joi.string().min(6).required(),
+        email:Joi.string().email().required(),
+        mobile:Joi.string().min(10).required(),
+        role:Joi.string()
+    })
+     const resultData = schema.validate(request.body)
+     if(resultData.error){
+        response.status(400).send(resultData.error.details[0].message);
+        return
+     }else {
+        response.status(400).send('Validation Success');
+        
+     }
     
     const UserData = {
         fullname: request.body.fullname,
@@ -89,6 +105,7 @@ const newUser = async (request, response) => {
         role: request.body.role,
 
     }
+
     let result = {};
 
     try {
@@ -183,12 +200,12 @@ const getProfile = async (request, response) => {
 //update Details
 const updateDetails = async(request,response)=>{
 
-    let id = request.query.id;
+    let id = request.params.id;
     let result ={}
     
     try {
         
-        await User.findByIdAndUpdate(id,request.body,{useFindAndModify:false
+        await AuthModel.findByIdAndUpdate(id,request.body,{useFindAndModify:false
         }).then(
             (data)=>{
                 if(!data){

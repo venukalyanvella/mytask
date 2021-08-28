@@ -1,14 +1,29 @@
 
 const User = require('../models/user.model');
+const Joi = require('@hapi/joi');
 
 
 //Create user
 const newUser = async (request,response)=>{
 
     let result = {};
+    const schema =Joi.object().keys({
+        firstname:Joi.string().min(3).required(),
+        lastname:Joi.string().min(3).required(),
+        username:Joi.string().min(3).required(),
+        email:Joi.string().email().required(),
+        mobile:Joi.number().min(10).required(),
+        designation:Joi.string(),
+        address:Joi.string().required(),
+        role:Joi.string()
+    });
+    const {resultData } = schema.validate(request.body)
+    if(resultData.error){
+       return response.status(400).send(resultData.error.details[0].message);
+        
+    }
     try {
-        
-        
+           
         const userDetails = new User({
             firstname:request.body.firstname,
             lastname:request.body.lastname,
@@ -32,7 +47,7 @@ const newUser = async (request,response)=>{
             success:true,
             statusCode:201,
             message:'New User Added successfully..',
-            data:user
+            data:null
         }
     } catch (error) {
         console.log('Failed to Save/Create New User ',error);
@@ -61,12 +76,13 @@ const getUser = async(request,response)=>{
         await User.find().skip(offset).limit(limit).then(
             (data)=>{
                 list = data
+                // console.log(data)
             }
         ).catch(err=>{
             throw err
         })
 
-        await User.count().then((data)=>{
+        await User.countDocuments().then((data)=>{
             // console.log('Total Count',data)
             total=data
         }).catch(err=>{
@@ -101,7 +117,7 @@ const getUser = async(request,response)=>{
 const chUser = async(request,response)=>{
 
     let result ={}
-    let id = request.query.id;
+    let id = request.params.id;
     console.log('Edit Id issss', id)
     try {
         
@@ -146,7 +162,7 @@ const chUser = async(request,response)=>{
 //delete user 
 const rmUser = async(request,response)=>{
     let result ={}
-    let id = request.query.id;
+    let id = request.params.id;
     try {
         
         await User.findByIdAndDelete(id,{useFindAndModify:false

@@ -7,13 +7,13 @@ var userCtrl = require('../controllers/user.controller');
 router.post('/register', authCtrl.newUser);
 router.post('/login',authCtrl.loginUser);
 router.post('/myprofile', authCtrl.getProfile);
-router.put('/chprofile', authCtrl.updateDetails);
+router.put('/chprofile/:id', authCtrl.updateDetails);
 
 // user Routes
 
 router.post('/user/allusers', userCtrl.getUser);
 router.post('/user/adduser', userCtrl.newUser);
-router.put('/user/chuser', userCtrl.chUser);
-router.delete('/user/rmuser', userCtrl.rmUser);
+router.put('/user/chuser/:id', userCtrl.chUser);
+router.delete('/user/rmuser/:id', userCtrl.rmUser);
 
 module.exports = router
